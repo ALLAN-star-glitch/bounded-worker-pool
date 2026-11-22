@@ -2,6 +2,15 @@
 
 A self-contained Go implementation demonstrating bounded concurrency, graceful `context` cancellation, race-free channel coordination, and goroutine leak detection.
 
+## Repository Structure
+
+```text
+bounded-worker-pool/
+├── go.mod          # Go module definition
+├── main.go         # Bounded worker pool implementation and runnable demo
+└── main_test.go    # Table-driven unit tests and goroutine leak checks
+```
+
 ## Architecture & Execution Flow
 
 ```text
@@ -19,19 +28,27 @@ A self-contained Go implementation demonstrating bounded concurrency, graceful `
    * `wg.Wait()` blocks until all workers exit via `defer wg.Done()`.
    * `close(resCh)` executes strictly after `wg.Wait()` to guarantee no worker attempts to send on a closed channel.
 
-## Running & Testing
+## Lab Instructions
 
-### Run the Demo with Race Detection
+### 1. Clone the Repository
+```bash
+git clone https://github.com/ALLAN-star-glitch/bounded-worker-pool.git
+cd bounded-worker-pool
+```
+
+### 2. Run the Demo with Race Detection
+Execute the worker pool (`2` workers processing `6` jobs at `50ms` each against a `120ms` timeout) with Go's race detector enabled:
 ```bash
 go run -race main.go
 ```
 
-### Run Table-Driven Tests & Goroutine Leak Checks
+### 3. Run Table-Driven Tests & Goroutine Leak Checks
+Execute the test suite with race detection and statement coverage:
 ```bash
 go test -race -v -cover ./...
 ```
 
-The test suite verifies:
-* **Normal Completion:** All jobs complete cleanly before the context deadline.
-* **Early Cancellation:** In-flight jobs abort with `context.DeadlineExceeded` when the timeout fires early.
-* **Zero Goroutine Leaks:** `runtime.NumGoroutine()` returns to baseline after pool termination.
+### 4. What Each Test Verifies
+* **Normal Completion (`all jobs complete before timeout`):** Verifies all jobs succeed cleanly when the context deadline exceeds total processing time.
+* **Early Cancellation (`early cancellation aborts remaining jobs`):** Verifies in-flight jobs abort immediately with `context.DeadlineExceeded` when the timeout fires early.
+* **Zero Goroutine Leaks:** Asserts `runtime.NumGoroutine()` returns to its pre-run baseline after pool termination.
